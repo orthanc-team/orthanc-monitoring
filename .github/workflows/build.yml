@@ -35,7 +35,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./prometheus
-          file: Dockerfile
+          file: ./prometheus/Dockerfile
           push: true
           tags: ${{ steps.meta-orthanc-prometheus.outputs.tags }}
           labels: ${{ steps.meta-orthanc-prometheus.outputs.labels }}
