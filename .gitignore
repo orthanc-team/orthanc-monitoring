@@ -1,0 +1,6 @@
+/orthanc-secrets
+/.env
+/.idea
+/passwords
+*/secrets/
+*.env

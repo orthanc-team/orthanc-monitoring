@@ -1,24 +1,24 @@
-# Orthanc-monitoring
+# Orthanc-prometheus
 
-## Summary
-Here is only a basic Orthanc with a Postgres.
+Based on the official `prom/prometheus` Docker image, here is an extra layer to allow the configuration of the scrap (Orthanc only) and remote write through environment variables.
 
-But these 2 services, as well as the host system and the containers, are monitored thanks to Prometheus.
-Grafana is also there to show the metrics.
+## How it works?
 
-## How it works
+A bash script will get the env var when the container starts and replace the placeholders in the `prometheus.yml` file.
 
-### Prometheus
+Then, Prometheus will be started as usual.
 
-Prometheus will collect the metrics from these sources:
-- Orthanc ([link to official doc](https://book.orthanc-server.com/users/advanced-rest.html#instrumentation-with-prometheus))
-- Node-exporter (allow to get the metrics from the system: CPU, RAM, disk space,...)
-- Postgres (thanks to the exporter)
-- CAdvisor (allow to get the metrics from the containers)
 
-### Grafana
+## How to use it ?
 
-There is a predefined dashboard with all the metrics listed above.
+Define these env vars:
 
-## Misc
-- There is a volume for the dashboard (Grafana container) so, if an update (with a new version of the dashboard) has to be made, the volume has to be deleted (otherwise, the dashboard will remain as it was)
+- `DEPLOYMENT_NAME` (default: `unnamed_deployement`)
+- `ORTHANC_SERVICE_NAME`  (default: `orthanc`)
+- `ORTHANC_SERVICE_PORT`  (default: `8042`)
+- `ORTHANC_USERNAME`  (default: `orthanc`)
+- `ORTHANC_PASSWORD`  (default: `orthanc`)
+
+- `REMOTE_WRITE_URL` (could be something  like `https://prometheus-something.grafana.net/api/prom/push`)
+- `REMOTE_WRITE_USERNAME` (some sort of ID from Grafana.com)
+- `REMOTE_WRITE_PASSWORD` (can be generated from Grafana.com)

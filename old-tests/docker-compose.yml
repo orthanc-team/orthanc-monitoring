@@ -1,0 +1,130 @@
+version: "3.8"
+
+services:
+
+    orthanc:
+        image: orthancteam/orthanc:24.3.4
+        restart: unless-stopped
+        depends_on:
+            - postgres
+        ports:
+            - 8042:8042
+        environment:
+            ORTHANC__NAME: "Orthanc PACS"
+            VERBOSE_ENABLED: "true"
+            VERBOSE_STARTUP: "true"
+            STONE_WEB_VIEWER_PLUGIN_ENABLED: "true"
+            ORTHANC__STONE_WEB_VIEWER__SHOW_INFO_PANEL_AT_STARTUP: "Never"
+            ORTHANC__ORTHANC_EXPLORER_2__UI_OPTIONS__STUDY_LIST_SEARCH_MODE: "search-button"
+            ORTHANC__ORTHANC_EXPLORER_2__UI_OPTIONS__STUDY_LIST_EMPTY_IF_NO_SEARCH: "true"
+            ORTHANC__ORTHANC_EXPLORER_2__IS_DEFAULT_ORTHANC_UI: "true"
+            ORTHANC__ORTHANC_EXPLORER_2__DATE_FORMAT: "dd.MM.yyyy"
+            ORTHANC__POSTGRESQL__HOST: "postgres"
+            ORTHANC__POSTGRESQL__ENABLE_INDEX: "true"
+            ORTHANC__POSTGRESQL__ENABLE_STORAGE: "false"
+            DICOM_WEB_PLUGIN_ENABLED: "true"
+            ORTHANC__AUTHENTICATION_ENABLED: "true"
+            ORTHANC__DICOM_MODALITIES: |
+                {
+                    "test": ["test", "dicom-tls-relay", 50000]
+                }
+        volumes: ["orthanc-data:/var/lib/orthanc/db:Z"]
+
+    postgres:
+        image: postgres:15
+        restart: unless-stopped
+        volumes: ["orthanc-index:/var/lib/postgresql/data:Z"] 
+        environment:
+            POSTGRES_HOST_AUTH_METHOD: "trust"
+
+    prometheus:
+        build: prometheus
+        ports:
+            - 9090:9090
+        volumes:
+            - prometheus_data:/prometheus
+        restart: unless-stopped
+        environment:
+            REMOTE_WRITE_URL: "https://xxxxxx.grafana.net/api/prom/push"
+            REMOTE_WRITE_USERNAME: 000000
+            
+            #DEPLOYMENT_NAME: "test-name3"
+
+    # node-exporter:
+    #     image: prom/node-exporter:v1.5.0
+    #     ports:
+    #         - 9100:9100
+    #     # volumes:
+    #     #     - /proc:/host/proc:ro
+    #     #     - /sys:/host/sys:ro
+    #     #     - /:/rootfs:ro
+    #     # command:
+    #     #     - '--path.procfs=/host/proc'
+    #     #     - '--path.sysfs=/host/sys'
+    #     #     - '--collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($$|/)'
+    #     command:
+    #         - '--path.rootfs=/host'
+    #         # - '--cap-add=SYS_TIME'
+    #     volumes:
+    #         - '/:/host:ro,rslave'
+    #     #     - /proc:/host/proc:ro
+    #     #     - /sys:/host/sys:ro
+    #     #     - /:/rootfs:ro
+    #     restart: unless-stopped
+
+    # cadvisor:
+    #     ports:
+    #         - 8080:8080
+    #     image: gcr.io/cadvisor/cadvisor:v0.47.1
+    #     volumes:
+    #         - /:/rootfs:ro
+    #         - /var/run:/var/run:ro
+    #         - /sys:/sys:ro
+    #         - /var/lib/docker/:/var/lib/docker:ro
+    #         - /dev/disk/:/dev/disk:ro            
+    #     privileged: true        
+    #     restart: unless-stopped
+    
+    # postgres-exporter:
+    #     ports:
+    #         - 9187:9187
+    #     image: quay.io/prometheuscommunity/postgres-exporter:v0.12.0
+    #     restart: unless-stopped
+    #     depends_on:
+    #         - postgres
+    #     environment:
+    #         - DATA_SOURCE_NAME=postgresql://postgres@postgres:5432/postgres?sslmode=disable
+            
+    grafana:
+        build: grafana
+        ports:
+            - 3000:3000
+        environment:
+            - GF_SECURITY_ADMIN_USER=admin
+            - GF_SECURITY_ADMIN_PASSWORD=admin
+            - GF_USERS_ALLOW_SIGN_UP=false
+            - DS_PROMETHEUS=prometheus
+        depends_on:
+            - prometheus
+        restart: unless-stopped
+        volumes:
+            - "dashboards:/var/lib/grafana:Z"
+            - "grafana-config:/etc/grafana:Z"
+            - "grafana-logs:/var/log/grafana:Z"
+
+    
+    victoria-metrics:
+        image: victoriametrics/victoria-metrics:v1.94.0
+        ports:
+            - 8428:8428
+        volumes:
+            - ./vm-data/:/victoria-metrics-data
+
+volumes:
+    prometheus_data:
+    orthanc-data:
+    orthanc-index:
+    dashboards:
+    grafana-config:
+    grafana-logs:
+

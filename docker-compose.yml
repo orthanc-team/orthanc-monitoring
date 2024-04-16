@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
     orthanc:
-        image: osimis/orthanc:23.3.0
+        image: orthancteam/orthanc:24.3.4
         restart: unless-stopped
         depends_on:
             - postgres
@@ -18,11 +18,16 @@ services:
             ORTHANC__ORTHANC_EXPLORER_2__UI_OPTIONS__STUDY_LIST_SEARCH_MODE: "search-button"
             ORTHANC__ORTHANC_EXPLORER_2__UI_OPTIONS__STUDY_LIST_EMPTY_IF_NO_SEARCH: "true"
             ORTHANC__ORTHANC_EXPLORER_2__IS_DEFAULT_ORTHANC_UI: "true"
+            ORTHANC__ORTHANC_EXPLORER_2__DATE_FORMAT: "dd.MM.yyyy"
             ORTHANC__POSTGRESQL__HOST: "postgres"
             ORTHANC__POSTGRESQL__ENABLE_INDEX: "true"
             ORTHANC__POSTGRESQL__ENABLE_STORAGE: "false"
             DICOM_WEB_PLUGIN_ENABLED: "true"
-            ORTHANC__AUTHENTICATION_ENABLED: "false"
+            ORTHANC__AUTHENTICATION_ENABLED: "true"
+            ORTHANC__DICOM_MODALITIES: |
+                {
+                    "test": ["test", "dicom-tls-relay", 50000]
+                }
         volumes: ["orthanc-data:/var/lib/orthanc/db:Z"]
 
     postgres:
@@ -38,77 +43,16 @@ services:
             - 9090:9090
         volumes:
             - prometheus_data:/prometheus
-        command:
-            - '--config.file=/etc/prometheus/prometheus.yml'
         restart: unless-stopped
-        depends_on:
-            - node-exporter
-
-    node-exporter:
-        image: prom/node-exporter:v1.5.0
-        ports:
-            - 9100:9100
-        # volumes:
-        #     - /proc:/host/proc:ro
-        #     - /sys:/host/sys:ro
-        #     - /:/rootfs:ro
-        # command:
-        #     - '--path.procfs=/host/proc'
-        #     - '--path.sysfs=/host/sys'
-        #     - '--collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($$|/)'
-        command:
-            - '--path.rootfs=/host'
-            # - '--cap-add=SYS_TIME'
-        volumes:
-            - '/:/host:ro,rslave'
-        #     - /proc:/host/proc:ro
-        #     - /sys:/host/sys:ro
-        #     - /:/rootfs:ro
-        restart: unless-stopped
-
-    cadvisor:
-        image: gcr.io/cadvisor/cadvisor:v0.47.1
-        volumes:
-            - /:/rootfs:ro
-            - /var/run:/var/run:ro
-            - /sys:/sys:ro
-            - /var/lib/docker/:/var/lib/docker:ro
-            - /dev/disk/:/dev/disk:ro            
-        privileged: true        
-        restart: unless-stopped
-    
-    postgres-exporter:
-        image: quay.io/prometheuscommunity/postgres-exporter:v0.12.0
-        restart: unless-stopped
-        depends_on:
-            - postgres
         environment:
-            - DATA_SOURCE_NAME=postgresql://postgres@postgres:5432/postgres?sslmode=disable
-            
-    grafana:
-        build: grafana
-        ports:
-            - 3000:3000
-        environment:
-            - GF_SECURITY_ADMIN_USER=admin
-            - GF_SECURITY_ADMIN_PASSWORD=admin
-            - GF_USERS_ALLOW_SIGN_UP=false
-            - DS_PROMETHEUS=prometheus
-        depends_on:
-            - prometheus
-        restart: unless-stopped
-        volumes:
-            - "dashboards:/var/lib/grafana:Z"
-            - "grafana-config:/etc/grafana:Z"
-            - "grafana-logs:/var/log/grafana:Z"
+            DEPLOYMENT_NAME: "test-name3"
+        env_file:
+            - ./prometheus.env
 
-    
+
 
 volumes:
     prometheus_data:
     orthanc-data:
     orthanc-index:
-    dashboards:
-    grafana-config:
-    grafana-logs:
-
+    

@@ -1,0 +1,50 @@
+name: build-orthanc-prometheus
+
+on:
+  push:
+    branches:
+      - '*'
+    tags:
+      - '*'
+
+jobs:
+
+  build-orthanc-prometheus:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker (orthanc-prometheus)
+        id: meta-orthanc-prometheus
+        uses: docker/metadata-action@v4
+        with:
+          images: orthancteam/orthanc-prometheus
+          labels: |
+            org.opencontainers.image.title=orthanc-prometheus
+            org.opencontainers.image.vendor=Orthanc Team SRL
+
+      - name: Build and push orthanc-prometheus Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta-orthanc-prometheus.outputs.tags }}
+          labels: ${{ steps.meta-orthanc-prometheus.outputs.labels }}
+
+      - name: Docker Hub Description (orthanc-prometheus)
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: orthancteam/orthanc-prometheus
+          short-description: A Prometheus pushing Orthanc metrics to a remote write destination.
+          readme-filepath: README.md
