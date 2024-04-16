@@ -43,6 +43,7 @@ jobs:
       - name: Docker Hub Description (orthanc-prometheus)
         uses: peter-evans/dockerhub-description@v3
         with:
+          context: ./prometheus
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: orthancteam/orthanc-prometheus
